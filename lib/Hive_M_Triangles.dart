@@ -12,7 +12,6 @@ class MovingTriangleHive extends StatefulWidget {
 
 class _MovingTriangleHiveState extends State<MovingTriangleHive> {
   List<Offset> nodes = [];
-  List<DbModel> dbnodes = [];
   int? selectedNodeIndex;
 
   // Open the box to store the nodes
