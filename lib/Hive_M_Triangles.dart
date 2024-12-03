@@ -51,7 +51,7 @@ class _MovingTriangleHiveState extends State<MovingTriangleHive> {
       // dbnodes=nodes as List<DbModel>;
       nodes.add(position);
       DbModel db = DbModel(nodes: nodes);
-      DatabaseBoxes.getData().put('node', db);
+      DatabaseBoxes.getData().add(db);
       // Save updated nodes to Hive
     });
   }
