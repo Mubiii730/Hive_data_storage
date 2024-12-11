@@ -55,7 +55,7 @@ class _MovingTriangleHiveState extends State<MovingTriangleHive> {
     });
   }
 
-  // Function to drag a node
+  // Function to drag a node                                                                                                                        //The problem is somewhere in dragnode function.
   void dragNode(Offset position) {
     if (selectedNodeIndex != null) {
       setState(() {
