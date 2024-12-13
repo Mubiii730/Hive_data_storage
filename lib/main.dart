@@ -4,6 +4,7 @@ import 'package:saving_node_project/Hive_M_Triangles.dart';
 import 'package:saving_node_project/Hive_stored_M_T.dart';
 import 'package:path_provider/path_provider.dart' as pat;
 import 'package:saving_node_project/db_model.dart';
+import 'package:saving_node_project/delete_addition.dart';
 
 
 // void main() {
@@ -15,7 +16,8 @@ void main()async{
   var path = await pat.getApplicationDocumentsDirectory();
    Hive.init(path.path);
    Hive.registerAdapter(DbModelAdapter());
- await Hive.openBox<DbModel>('triangleNodes');
+     Hive.registerAdapter(OffsetAdapter());
+   await Hive.openBox<DbModel>('triangleNodes');
    print(path.path);  
    runApp(const MyApp());
 }
@@ -25,6 +27,6 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(home:MovingTriangleHive());
+    return const MaterialApp(home:MovingTriangleHiveDeletion());
   }
 }
