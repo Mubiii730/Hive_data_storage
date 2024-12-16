@@ -63,12 +63,17 @@ void addNode(Offset position) {
 
 void deleteNode() {
   if (selectedNodeIndex != null) {
+    var listData = DatabaseBoxes.getData();
+    var existingkey;
     setState(() {
+       listData.values.map((e) => setState(() {
+        existingkey = e.key;
+      })).toList();
       // Delete the node from the list
-      nodes.removeAt(selectedNodeIndex!);
+     nodes.removeAt(selectedNodeIndex!);
       
       // Delete the node from the database
-      DatabaseBoxes.deleteUser(selectedNodeIndex!);
+      DatabaseBoxes.deleteUser(existingkey);
       
       // Clear selected node after deletion
       selectedNodeIndex = null;
@@ -187,6 +192,7 @@ Widget build(BuildContext context) {
           });
         }
       },
+     
       onPanUpdate: (details) {
         if (selectedNodeIndex != null) {
           dragNode(details.localPosition);
@@ -197,14 +203,22 @@ Widget build(BuildContext context) {
           setState(() {});
         }
       },
-      onLongPress: () {
+
+      onDoubleTap: () {
+        setState(() {
+          
+        });
         deleteNode();
       },
+      
       child: Scaffold(
         body: ValueListenableBuilder(
           valueListenable: DatabaseBoxes.getData().listenable(),
           builder: (context, box, _) {
             var data = box.values.toList().cast<DbModel>();
+            
+           
+           
             return Stack(
               children: data.isEmpty
                   ? [
