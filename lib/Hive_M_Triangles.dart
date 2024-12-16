@@ -1,85 +1,141 @@
-// line 58:      problem 
-
-
-
 
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:saving_node_project/db_model.dart';
 import 'package:saving_node_project/dbboxes.dart';
+import 'package:uuid/uuid.dart';
 
-class MovingTriangleHive extends StatefulWidget {
-  const MovingTriangleHive({super.key});
+class MovingTriangleHiveDeletion extends StatefulWidget {
+  const MovingTriangleHiveDeletion({super.key});
 
   @override
-  State<MovingTriangleHive> createState() => _MovingTriangleHiveState();
+  State<MovingTriangleHiveDeletion> createState() => _MovingTriangleHiveDeletionState();
 }
 
-class _MovingTriangleHiveState extends State<MovingTriangleHive> {
+class _MovingTriangleHiveDeletionState extends State<MovingTriangleHiveDeletion> {
   List<Offset> nodes = [];
   int? selectedNodeIndex;
+var uuid = Uuid();
 
-  // Open the box to store the nodes
+// DbModel? dbModel;
   Box? nodesBox;
 
   @override
   void initState() {
     super.initState();
-    // _openBox();  // Open the Hive box
-  }
-
-  // Function to open the Hive box to store and retrieve data
-  // Future<void> _openBox() async {
-  //   await Hive.initFlutter();
-  //   nodesBox = await Hive.openBox('triangleNodes');
-  //   loadNodes();  // Load previously saved nodes
-  // }
-
-
-  // Load nodes from the Hive box
-  void loadNodes() {
-    final savedNodes = nodesBox?.get('triangleNodes', defaultValue: <Map<String, double>>[]);
-    if (savedNodes != null) {
-      setState(() {
-        nodes = savedNodes.map((e) => Offset(e['dx']!, e['dy']!)).toList();
-        // dbnodes=DatabaseBoxes.getData().get('key')
-      });
-    }
+   
+    loadNodes();
   }
 
   
-
-  // Function to add a new node
-  void addNode(Offset position) {
+void dragNode(Offset position) {
+  if (selectedNodeIndex != null) {
+    var listData = DatabaseBoxes.getData();
+    var existingkey;
     setState(() {
-      // dbnodes=nodes as List<DbModel>;
-      nodes.add(position);
+      listData.values.map((e) => setState(() {
+        existingkey = e.key;
+      })).toList();
+      nodes[selectedNodeIndex!] = position;
       DbModel db = DbModel(nodes: nodes);
-      DatabaseBoxes.getData().add(db);
-      // Save updated nodes to Hive
+      DatabaseBoxes.getData().put(existingkey, db); 
     });
   }
+}
 
-  // Function to drag a node                                                                                                                        //The problem is somewhere in dragnode function.
-  void dragNode(Offset position) {
-    if (selectedNodeIndex != null) {
-      setState(() {
-        nodes[selectedNodeIndex!] = position;
-        DbModel db = DbModel(nodes: nodes);
-        DatabaseBoxes.getData().put('node', db);
-        // nodesBox?.put('triangleNodes', nodes.map((e) => {'dx': e.dx, 'dy': e.dy}).toList()); // Save updated nodes to Hive
-      });
-    }
+void loadNodes() {
+  DbModel? db = DatabaseBoxes.getData().get('nodes');
+  if (db != null) {
+    setState(() {
+      nodes = db.nodes; 
+    });
   }
+}
 
-  // Check if the tap is on an existing node
+void addNode(Offset position) {
+  setState(() {
+    var key = uuid.v1();
+    nodes.add(position);
+    DbModel db = DbModel(nodes: nodes);
+    DatabaseBoxes.getData().put(key, db);  
+  });
+}
+
+void deleteNode() {
+  if (selectedNodeIndex != null) {
+    setState(() {
+      // Delete the node from the list
+      nodes.removeAt(selectedNodeIndex!);
+      
+      // Delete the node from the database
+      DatabaseBoxes.deleteUser(selectedNodeIndex!);
+      
+      // Clear selected node after deletion
+      selectedNodeIndex = null;
+    });
+  }
+}
+
+
+//   void addNode(Offset position) {
+//   setState(() {
+//     var key = uuid.v1();
+//     nodes.add(position);
+//     DbModel db = DbModel( nodes: nodes);
+//     DatabaseBoxes.getData().put(key, db);  
+//   });
+// }
+
+
+// void dragNode(Offset position) {
+//   if (selectedNodeIndex != null) {
+//     var listData = DatabaseBoxes.getData();
+//     var existingkey;
+//     setState(() {
+//       listData.values.map((e)=> setState(() {
+//         existingkey = e.key;
+//       })).toList();
+//       nodes[selectedNodeIndex!] = position;
+//         // DbModel db = DbModel(id:int.tryParse(uuid.v1()) ,nodes: nodes);
+//         DbModel db = DbModel(nodes: nodes);
+
+//       DatabaseBoxes.getData().put(existingkey,db); 
+//     });
+//   }
+// }
+
+
+// void loadNodes() {
+//   DbModel? db = DatabaseBoxes.getData().get('nodes');
+//   if (db != null) {
+//     setState(() {
+//       nodes = db.nodes; 
+//     });
+//   }
+// }
+
+  
+  // void loadNodes() {
+  //   final savedNodes = nodesBox?.get('triangleNodes', defaultValue: <Map<String, double>>[]);
+  //   if (savedNodes != null) {
+  //     setState(() {
+  //       nodes = savedNodes.map((e) => Offset(e['dx']!, e['dy']!)).toList();
+       
+  //     });
+  //   }
+  // }
+
+
+
+
+  
   bool isTapOnNode(Offset tapPosition) {
     for (int i = 0; i < nodes.length; i++) {  //scalability concern
       final nodePosition = nodes[i];
       final trianglePath = _getTrianglePath(nodePosition);
       if (trianglePath.contains(tapPosition)) {
         setState(() {
-          selectedNodeIndex = i;  // Select the node
+          selectedNodeIndex = i;  
         });
         return true;
       }
@@ -87,7 +143,7 @@ class _MovingTriangleHiveState extends State<MovingTriangleHive> {
     return false;
   }
 
-  // Function to generate the triangle path for a given node position
+ 
   Path _getTrianglePath(Offset position) {
     final path = Path();
     final top = Offset(position.dx, position.dy);
@@ -101,15 +157,33 @@ class _MovingTriangleHiveState extends State<MovingTriangleHive> {
     return path;
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
+
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    appBar: AppBar(
+      title: Center(child: Text('Moving Triangles', style: TextStyle(color: Colors.amberAccent))),
+      actions: [
+        IconButton(
+          icon: Icon(Icons.delete),
+          onPressed: () {
+            // Clear all nodes and database
+            DatabaseBoxes.deleteAllUser(nodes.length);
+            setState(() {
+              nodes.clear();
+            });
+          },
+        ),
+      ],
+      backgroundColor: Colors.blue,
+    ),
+    body: GestureDetector(
       onTapUp: (details) {
         if (selectedNodeIndex == null) {
           addNode(details.localPosition);
         } else {
           setState(() {
-            selectedNodeIndex = null; // Deselect node if tapped outside
+            selectedNodeIndex = null; 
           });
         }
       },
@@ -120,39 +194,126 @@ class _MovingTriangleHiveState extends State<MovingTriangleHive> {
       },
       onPanStart: (details) {
         if (isTapOnNode(details.localPosition)) {
-          setState(() {
-            // Node selected, ready to drag
-          });
+          setState(() {});
         }
       },
+      onLongPress: () {
+        deleteNode();
+      },
       child: Scaffold(
-        body: ValueListenableBuilder(valueListenable: DatabaseBoxes.getData().listenable(), 
-        builder: (context, box, _){
-          var data = box.values.toList().cast<DbModel>();
-          if(data.isEmpty){
+        body: ValueListenableBuilder(
+          valueListenable: DatabaseBoxes.getData().listenable(),
+          builder: (context, box, _) {
+            var data = box.values.toList().cast<DbModel>();
             return Stack(
-          children: [
-            CustomPaint(
-              size: Size.infinite,
-              painter: NodePainter(nodes),
-            ),
-          ],
-        );
-          } else {
-          return Stack(
-          children: data.map((e)=> CustomPaint(
-              size: Size.infinite,
-              painter: NodePainter(e.nodes),
-            ), ).toList()
-           
-          ,
-        );
-          }
-        }) 
+              children: data.isEmpty
+                  ? [
+                      CustomPaint(
+                        size: Size.infinite,
+                        painter: NodePainter(nodes),
+                      ),
+                    ]
+                  : data.map((e) => CustomPaint(
+                      size: Size.infinite,
+                      painter: NodePainter(e.nodes),
+                    )).toList(),
+            );
+          },
+        ),
       ),
-    );
-  }
+    ),
+  );
 }
+}
+
+
+
+
+
+
+
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       appBar: AppBar(
+//         title: Center(child: Text('Moving Triangles',style: TextStyle(color: Colors.amberAccent),)),
+//         actions: [
+//         IconButton(
+//           icon: Icon(Icons.delete),
+//           onPressed: () {
+//             DatabaseBoxes.deleteAllUser(nodes.length);
+//             setState(() {
+//               nodes.clear();
+//             });
+           
+//           },
+//         ),
+//       ],
+//        backgroundColor: Colors.blue,
+        
+//       ),
+//       body: GestureDetector(
+//         onTapUp: (details) {
+//           if (selectedNodeIndex == null) {
+//             addNode(details.localPosition);
+//           } else {
+//             setState(() {
+//               selectedNodeIndex = null; 
+//             });
+//           }
+//         },
+//         onPanUpdate: (details) {
+//           if (selectedNodeIndex != null) {
+//             dragNode(details.localPosition);
+//           }
+//         },
+//         onPanStart: (details) {
+//           if (isTapOnNode(details.localPosition)) {
+//             setState(() {
+             
+//             });
+//           }
+//         },
+//         onLongPress: () {
+//             if (selectedNodeIndex != null) {
+//               setState(() {
+//                 nodes.removeAt(selectedNodeIndex!);
+//                 DatabaseBoxes.deleteUser(selectedNodeIndex!);
+//                 loadNodes(); // Save updated list after deletion
+//                 selectedNodeIndex = null;
+//               });
+//             }
+//           },
+//         child: Scaffold(
+//           body: ValueListenableBuilder(valueListenable: DatabaseBoxes.getData().listenable(), 
+//           builder: (context, box, _){
+//             var data = box.values.toList().cast<DbModel>();
+//             if(data.isEmpty){
+//               return Stack(
+//             children: [
+//               CustomPaint(
+//                 size: Size.infinite,
+//                 painter: NodePainter(nodes),
+//               ),
+//             ],
+//           );
+//             } else {
+//             return Stack(
+//             children: data.map((e)=> CustomPaint(
+//                 size: Size.infinite,
+//                 painter: NodePainter(e.nodes),
+//               ), ).toList()
+             
+//             ,
+//           );
+//             }
+//           }) 
+//         ),
+//       ),
+//     );
+//   }
+// }
 
 class NodePainter extends CustomPainter {
   NodePainter(this.nodes);
