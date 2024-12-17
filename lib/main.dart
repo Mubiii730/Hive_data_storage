@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:saving_node_project/Hive_M_Triangles.dart';
-import 'package:saving_node_project/Hive_stored_M_T.dart';
 import 'package:path_provider/path_provider.dart' as pat;
 import 'package:saving_node_project/db_model.dart';
 import 'package:saving_node_project/delete_addition.dart';
@@ -16,7 +14,7 @@ void main()async{
   var path = await pat.getApplicationDocumentsDirectory();
    Hive.init(path.path);
    Hive.registerAdapter(DbModelAdapter());
-     Hive.registerAdapter(OffsetAdapter());
+    Hive.registerAdapter(OffsetAdapter());
    await Hive.openBox<DbModel>('triangleNodes');
    print(path.path);  
    runApp(const MyApp());
